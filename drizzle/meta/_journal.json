@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1778815521129,
+      "tag": "0000_modern_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1778816142615,
+      "tag": "0001_tidy_marvex",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778955203517,
+      "tag": "0002_safe_korvac",
+      "breakpoints": true
+    }
+  ]
+}
