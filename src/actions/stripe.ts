@@ -7,8 +7,8 @@ import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
 // Initialize Stripe (You will need to add STRIPE_SECRET_KEY to your .env.local file)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2024-04-10",
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: "2026-04-22.dahlia",
 });
 
 export async function createCheckoutSession(itemId: string) {

@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { generateShippingLabel } from "@/actions/shippo"; // Your logistics engine
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2024-04-10",
+  apiVersion: "2026-04-22.dahlia",
 });
 
 export async function POST(req: Request) {
