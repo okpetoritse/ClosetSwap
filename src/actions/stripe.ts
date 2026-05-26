@@ -2,17 +2,18 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { items } from "@/lib/db/schema";
+import { items, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
-// Initialize Stripe (You will need to add STRIPE_SECRET_KEY to your .env.local file)
+// Initialize Stripe 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: "2026-04-22.dahlia",
 });
 
 export async function createCheckoutSession(itemId: string) {
   try {
+    // 🚀 Only declared once!
     const { userId } = await auth();
     if (!userId) return { error: "You must be logged in to buy an item." };
 
@@ -22,6 +23,12 @@ export async function createCheckoutSession(itemId: string) {
     if (!item || !item.salePrice) return { error: "Item is not available for sale." };
     if (item.ownerId === userId) return { error: "You cannot buy your own item." };
 
+    // Fetch the seller to get their connected Stripe Account ID for the split payout
+    const [seller] = await db.select().from(users).where(eq(users.id, item.ownerId));
+    if (!seller || !seller.stripeAccountId) {
+      return { error: "Seller has not connected a bank account yet." };
+    }
+
     // Parse image for the checkout screen
     let imageUrl = "https://placehold.co/400x400/1a1a1a/333333?text=ClosetSwap";
     try {
@@ -29,7 +36,11 @@ export async function createCheckoutSession(itemId: string) {
       if (parsed?.length > 0) imageUrl = parsed[0];
     } catch (e) {}
 
-    // 2. Create the Stripe Session
+    // Calculate the 15% platform fee in cents
+    const totalAmount = Math.round(Number(item.salePrice) * 100);
+    const platformFee = Math.round(totalAmount * 0.15); 
+
+    // 2. Create the Stripe Session with Split Payments
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
@@ -41,13 +52,18 @@ export async function createCheckoutSession(itemId: string) {
               name: item.title,
               images: [imageUrl],
             },
-            // Stripe requires prices in cents! ($150.00 = 15000 cents)
-            unit_amount: Math.round(Number(item.salePrice) * 100), 
+            unit_amount: totalAmount, 
           },
           quantity: 1,
         },
       ],
-      // We will build this success page later to officially transfer ownership
+      // 🚀 THE CONNECT ENGINE: Split the money
+      payment_intent_data: {
+        application_fee_amount: platformFee, // ClosetSwap keeps 15%
+        transfer_data: {
+          destination: seller.stripeAccountId, // Seller gets 85%
+        },
+      },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/item/${item.id}`,
       metadata: {
@@ -61,37 +77,4 @@ export async function createCheckoutSession(itemId: string) {
     console.error("Stripe Error:", error);
     return { error: "Failed to initialize secure checkout." };
   }
-
-  // Inside your createCheckoutSession function:
-
-    // 1. Fetch the item AND the seller's Stripe Account ID
-    const [item] = await db.select().from(items).where(eq(items.id, itemId));
-    // Assume we also fetch the seller's user profile here to get their stripeAccountId
-    const sellerStripeAccountId = "acct_1DummyTestID"; // We will make this dynamic later
-
-    // Calculate the 15% platform fee in cents
-    const totalAmount = Math.round(Number(item.salePrice) * 100);
-    const platformFee = Math.round(totalAmount * 0.15); 
-
-    // 2. Create the Stripe Session with Split Payments
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "payment",
-      line_items: [ /* ... same as before ... */ ],
-      
-      // 🚀 THE CONNECT ENGINE: Split the money
-      payment_intent_data: {
-        application_fee_amount: platformFee, // ClosetSwap keeps 15%
-        transfer_data: {
-          destination: sellerStripeAccountId, // Seller gets 85%
-        },
-      },
-      
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/item/${item.id}`,
-      metadata: {
-        itemId: item.id,
-        buyerId: userId,
-      },
-    });
 }
