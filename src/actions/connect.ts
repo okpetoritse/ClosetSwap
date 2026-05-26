@@ -52,3 +52,5 @@ export async function createStripeConnectAccount() {
     return { error: "Failed to initialize banking portal." };
   }
 }
+
+// forcing git update.
