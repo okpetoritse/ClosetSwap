@@ -51,8 +51,9 @@ export default function UploadPage() {
                   </Button>
                 </div>
               ) : (
-                <UploadButton<OurFileRouter>
-                  endpoint="itemMedia"
+                // 🚀 THE FIX: We added "itemMedia" as the second argument in the brackets
+<UploadButton<OurFileRouter, "itemMedia">
+  endpoint="itemMedia"
                   onUploadBegin={() => setIsUploading(true)}
                   onClientUploadComplete={(res) => {
   // 🚀 Change file.url to file.ufsUrl
@@ -80,7 +81,8 @@ export default function UploadPage() {
             <div className="space-y-2">
               <Label htmlFor="baseCategory">Category</Label>
               <input type="hidden" name="baseCategory" value={category} />
-              <Select onValueChange={setCategory} required>
+              {/* 🚀 THE FIX: Intercept the value and guarantee it's a string */}
+                <Select onValueChange={(value: any) => setCategory(value ? String(value) : "")} required>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -144,7 +146,8 @@ export default function UploadPage() {
           <div className="space-y-2">
             <Label htmlFor="transactionType">Listing Type</Label>
             <input type="hidden" name="transactionType" value={listingType} />
-            <Select onValueChange={setListingType} required>
+            {/* 🚀 THE FIX: The ultimate TypeScript override */}
+<Select onValueChange={(value: any) => setCategory(value ? String(value) : "")} required>
               <SelectTrigger className="bg-background border-primary/50">
                 <SelectValue placeholder="How do you want to list this?" />
               </SelectTrigger>

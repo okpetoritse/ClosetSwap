@@ -23,10 +23,10 @@ export const items = mysqlTable("items", {
   itemCondition: mysqlEnum("item_condition", ["new_with_tags", "like_new", "fairly_used", "vintage_distressed"]).notNull(),
   estimatedValue: decimal("estimated_value", { precision: 10, scale: 2 }), 
   salePrice: decimal("sale_price", { precision: 10, scale: 2 }), 
-  attributes: json("attributes").$type<Record<string, any>>(),status: mysqlEnum("status", ["active", "in_escrow", "swapped", "sold"]).default("active"),
+  attributes: json("attributes").$type<Record<string, any>>(),
   mediaUrls: json("media_urls").$type<string[]>().notNull(),
   status: mysqlEnum("status", ["active", "in_escrow", "swapped", "sold"]).default("active"),
-  createdAt: timestamp("created_at").defaultNow(), // 🚀 Saved!
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // 3. Swap Proposals

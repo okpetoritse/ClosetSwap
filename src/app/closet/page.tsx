@@ -146,10 +146,14 @@ export default async function ClosetPage({ searchParams }: { searchParams: Promi
           </form>
 
           {/* 3. Stripe Checkout Button */}
+          {/* 3. Stripe Checkout Button */}
+            {/* 3. Stripe Checkout Button */}
           <form action={async () => {
             "use server";
-            const result = await createCheckoutSession("Vintage Jordan 4 Black Cat", 450.00);
-            if (result.success && result.url) {
+            const result = await createCheckoutSession("test_item_id");
+            
+            // 🚀 THE FIX: Just check if the URL exists!
+            if (result.url) {
               redirect(result.url);
             } else {
               console.error(result.error);

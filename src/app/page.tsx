@@ -27,8 +27,11 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   }
 
   if (categoryFilter && categoryFilter !== "All") {
-    conditions.push(eq(items.baseCategory, categoryFilter));
-  }
+     // 🚀 THE FIX: We cast the string to match the exact database Enum
+     conditions.push(
+       eq(items.baseCategory, categoryFilter as "clothing" | "sneakers" | "jewelry" | "accessories")
+     );
+   }
 
   // 3. Fetch the items (Applying filters if the user searched for something)
   const baseQuery = db.select().from(items).orderBy(desc(items.createdAt));
@@ -81,7 +84,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                 <Link href="/inbox" className="hidden md:block hover:text-white text-gray-400 transition-colors">Inbox</Link>
                 <Link href="/closet" className="hidden md:block hover:text-white text-gray-400 transition-colors">My Closet</Link>
                 <Link href="/upload" className="bg-white text-black px-6 py-2.5 rounded-full hover:bg-gray-200 transition-colors shadow-lg shadow-white/10">Sell</Link>
-                <UserButton afterSignOutUrl="/" />
+                <UserButton />
               </>
             ) : (
               <>
