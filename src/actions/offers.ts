@@ -4,7 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { offers, items } from "@/lib/db/schema";
 import { randomUUID } from "crypto";
-import { eq, inArray } from "drizzle-orm"; // <-- All Drizzle imports safely at the top!
+import { eq, inArray } from "drizzle-orm";
+import { revalidatePath } from "next/cache"; // 🚀 THE FIX: Import the page refresher
 
 // ==========================================
 // ACTION 1: SUBMIT A NEW OFFER
@@ -43,6 +44,9 @@ export async function submitOffer(formData: FormData) {
       message,
       status: "pending",
     });
+
+    // 🚀 THE FIX: Refresh the item page so the user sees their offer was sent
+    revalidatePath(`/item/${targetItemId}`);
 
     return { success: true };
 
@@ -98,6 +102,10 @@ export async function respondToOffer(offerId: string, response: "accepted" | "re
           .where(inArray(items.id, offeredIds));
       }
     }
+
+    // 🚀 THE FIX: Force the browser to refresh the Inbox and Closet to show the new items!
+    revalidatePath("/inbox");
+    revalidatePath("/closet");
 
     return { success: true };
   } catch (e: any) {
